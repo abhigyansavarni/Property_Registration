@@ -1,0 +1,22 @@
+OrdererOrgs: 
+ - Name: Orderer
+   Domain: propertyregistration-network.com
+   Specs: 
+    - Hostname: Orderer
+
+PeerOrgs: 
+ - Name: user
+   Domain: user.propertyregistration-network.com
+   EnableNodeOUs: true
+   Template:
+      Count: 2
+   Users:
+      Count: 1
+
+ - Name: registrar
+   Domain: registrar.propertyregistration-network.com
+   EnableNodeOUs: true
+   Template:
+      Count: 2
+   Users:
+      Count: 1

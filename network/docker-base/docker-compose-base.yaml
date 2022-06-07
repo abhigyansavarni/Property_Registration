@@ -1,0 +1,122 @@
+version: '2'
+
+services:
+
+  orderer.propertyregistration-network.com:
+    container_name: orderer.propertyregistration-network.com
+    image: hyperledger/fabric-orderer:1.4.3
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      # enabled TLS
+      - ORDERER_GENERAL_TLS_ENABLED=false
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      #- GODEBUG=netdns=go
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    volumes:
+    - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+    - ../crypto-config/ordererOrganizations/propertyregistration-network.com/orderers/Orderer.propertyregistration-network.com/msp:/var/hyperledger/orderer/msp
+    - ../crypto-config/ordererOrganizations/propertyregistration-network.com/orderers/Orderer.propertyregistration-network.com/tls/:/var/hyperledger/orderer/tls
+    - orderer.propertyregistration-network.com:/var/hyperledger/production/orderer
+    ports:
+      - 7052:7052
+
+  peer0.user.propertyregistration-network.com:
+    container_name: peer0.user.propertyregistration-network.com
+    extends:
+      file: docker-compose-peer.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer0.user.propertyregistration-network.com
+      - CORE_PEER_ADDRESS=peer0.user.propertyregistration-network.com:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.user.propertyregistration-network.com:7053
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7053
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer1.user.propertyregistration-network.com:8051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.user.propertyregistration-network.com:7051
+      - CORE_PEER_LOCALMSPID=userMSP
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../crypto-config/peerOrganizations/user.propertyregistration-network.com/peers/peer0.user.propertyregistration-network.com/msp:/etc/hyperledger/fabric/msp
+        - ../crypto-config/peerOrganizations/user.propertyregistration-network.com/peers/peer0.user.propertyregistration-network.com/tls:/etc/hyperledger/fabric/tls
+        - peer0.user.propertyregistration-network.com:/var/hyperledger/production
+    ports:
+      - 7051:7051
+      - 7053:7053
+
+  peer1.user.propertyregistration-network.com:
+    container_name: peer1.user.propertyregistration-network.com
+    extends:
+      file: docker-compose-peer.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer1.user.propertyregistration-network.com
+      - CORE_PEER_ADDRESS=peer1.user.propertyregistration-network.com:8051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:8051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.user.propertyregistration-network.com:8053
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:8053
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.user.propertyregistration-network.com:8051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.user.propertyregistration-network.com:7051
+      - CORE_PEER_LOCALMSPID=userMSP
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../crypto-config/peerOrganizations/user.propertyregistration-network.com/peers/peer1.user.propertyregistration-network.com/msp:/etc/hyperledger/fabric/msp
+        - ../crypto-config/peerOrganizations/user.propertyregistration-network.com/peers/peer1.user.propertyregistration-network.com/tls:/etc/hyperledger/fabric/tls
+        - peer1.user.propertyregistration-network.com:/var/hyperledger/production
+
+    ports:
+      - 8051:8051
+      - 8053:8053
+
+  peer0.registrar.propertyregistration-network.com:
+    container_name: peer0.registrar.propertyregistration-network.com
+    extends:
+      file: docker-compose-peer.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer0.registrar.propertyregistration-network.com
+      - CORE_PEER_ADDRESS=peer0.registrar.propertyregistration-network.com:9051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:9051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.registrar.propertyregistration-network.com:9053
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9053
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.registrar.propertyregistration-network.com:9051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer1.registrar.propertyregistration-network.com:10051
+      - CORE_PEER_LOCALMSPID=registrarMSP
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../crypto-config/peerOrganizations/registrar.propertyregistration-network.com/peers/peer0.registrar.propertyregistration-network.com/msp:/etc/hyperledger/fabric/msp
+        - ../crypto-config/peerOrganizations/registrar.propertyregistration-network.com/peers/peer0.registrar.propertyregistration-network.com/tls:/etc/hyperledger/fabric/tls
+        - peer0.registrar.propertyregistration-network.com:/var/hyperledger/production
+    ports:
+      - 9051:9051
+      - 9053:9053
+
+  peer1.registrar.propertyregistration-network.com:
+    container_name: peer1.registrar.propertyregistration-network.com
+    extends:
+      file: docker-compose-peer.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer1.registrar.propertyregistration-network.com
+      - CORE_PEER_ADDRESS=peer1.registrar.propertyregistration-network.com:10051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:10051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.registrar.propertyregistration-network.com:10053
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:10053
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.registrar.propertyregistration-network.com:10051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.registrar.propertyregistration-network.com:9051
+      - CORE_PEER_LOCALMSPID=registrarMSP
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../crypto-config/peerOrganizations/registrar.propertyregistration-network.com/peers/peer1.registrar.propertyregistration-network.com/msp:/etc/hyperledger/fabric/msp
+        - ../crypto-config/peerOrganizations/registrar.propertyregistration-network.com/peers/peer1.registrar.propertyregistration-network.com/tls:/etc/hyperledger/fabric/tls
+        - peer1.registrar.propertyregistration-network.com:/var/hyperledger/production
+    ports:
+      - 10051:10051
+      - 10053:10053
